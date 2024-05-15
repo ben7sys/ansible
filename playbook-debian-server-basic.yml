@@ -1,0 +1,105 @@
+---
+# This playbook is used to setup a basic secure Debian server
+- name: Setup Enterprise Server Basic
+  hosts: servers
+  become: yes
+  tasks:
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install necessary packages
+      apt:
+        name:
+          - nano
+          - git
+          - curl
+          - wget
+          - ufw
+          - fail2ban
+          - unattended-upgrades
+        state: present
+
+   - name: Create a new user
+      user:
+        name: sieben
+        uid: 1000
+        state: present
+        groups: sudo
+        append: yes
+
+    - name: Create a new user
+      user:
+        name: deploy
+        uid: 1001
+        state: present
+        groups: sudo
+        append: yes
+
+    - name: Set authorized key for the new user
+      authorized_key:
+        user: sieben
+        state: present
+        key: "{{ lookup('file', 'id_rsa_sieben.pub') }}"
+        
+    - name: Set authorized key for the new user
+      authorized_key:
+        user: deploy
+        state: present
+        key: "{{ lookup('file', 'id_rsa_deploy.pub') }}"
+
+    - name: Configure SSH
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+        state: present
+
+    - name: Restart SSH service
+      service:
+        name: ssh
+        state: restarted
+
+    - name: Configure UFW to allow SSH
+      ufw:
+        rule: allow
+        port: 22
+        proto: tcp
+
+    - name: Configure UFW to allow HTTP
+      ufw:
+        rule: allow
+        port: 80
+        proto: tcp
+
+    - name: Configure UFW to allow HTTPS
+      ufw:
+        rule: allow
+        port: 443
+        proto: tcp
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
+
+    - name: Ensure fail2ban is running and enabled
+      service:
+        name: fail2ban
+        state: started
+        enabled: yes
+
+    - name: Configure automatic updates
+      copy:
+        content: |
+          APT::Periodic::Update-Package-Lists "1";
+          APT::Periodic::Download-Upgradeable-Packages "1";
+          APT::Periodic::AutocleanInterval "7";
+          APT::Periodic::Unattended-Upgrade "1";
+        dest: /etc/apt/apt.conf.d/20auto-upgrades
+        owner: root
+        group: root
+        mode: 0644
+      
+    - name: Reconfigure unattended-upgrades
+      command: dpkg-reconfigure --priority=low unattended-upgrades

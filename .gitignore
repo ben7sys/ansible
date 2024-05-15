@@ -1,1 +1,3 @@
 .ansibleconda
+vault_password_file
+~/.ansible/vault_password

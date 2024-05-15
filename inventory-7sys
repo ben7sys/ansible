@@ -1,0 +1,6 @@
+# Inventory 7sys.de
+
+[servers]
+srv1 ansible_host=192.168.77.201 ansible_user=root ansible_password=your_root_password
+srv2 ansible_host=192.168.77.202 ansible_user=root ansible_ssh_private_key_file=/path/to/your/private_key
+srv3 ansible_host=192.168.77.203 ansible_user=root ansible_ssh_private_key_file=/path/to/your/private_key
