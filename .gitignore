@@ -2,3 +2,4 @@
 vault_password_file
 ~/.ansible/vault_password
 .ansible-deploy
+.ansible-deploy/*
